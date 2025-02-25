@@ -1,0 +1,24 @@
+{
+  "name": "api-server",
+  "version": "1.0.0",
+  "description": "Primary server to handle all trade related requests.",
+  "scripts": {
+    "build": "esbuild src/index.ts --platform=node --bundle --outdir=dist",
+    "dev": "pnpm run build && node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.15.4",
+    "koa-bodyparser": "^4.4.1",
+    "koa-router": "^13.0.1",
+    "esbuild": "^0.23.1"
+  },
+  "devDependencies": {
+    "@types/koa-router": "^7.4.8",
+    "@types/koa": "^2.15.0",
+    "@types/koa-bodyparser": "^4.3.12",
+    "@repo/typescript-config":"workspace:*"
+  }
+}
