@@ -1,0 +1,25 @@
+{
+  "name": "engine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --platform=node --bundle --outdir=dist",
+    "dev": "pnpm run build && node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/minimalistic-assert": "^1.0.3",
+    "koa": "^2.15.4",
+    "minimalistic-assert": "^1.0.1",
+    "redis": "^4.7.0",
+    "valibot": "1.0.0-rc.3"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/koa": "^2.15.0",
+    "esbuild": "^0.23.1"
+  }
+}
