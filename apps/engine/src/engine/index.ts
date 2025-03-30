@@ -18,7 +18,7 @@ export class Engine{
         this.orderbooks = new Map();
     }
 
-    public get_instance(){
+    public static get_instance(){
         if(!Engine.instance)
         {
             Engine.instance = new Engine();

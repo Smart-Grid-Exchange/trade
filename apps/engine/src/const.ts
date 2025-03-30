@@ -1,0 +1,1 @@
+export const MARKETS = ["DAY_AHEAD","HOUR_AHEAD"];
