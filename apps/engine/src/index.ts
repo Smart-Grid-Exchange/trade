@@ -49,6 +49,7 @@ function process_queue(data: WorkerPayload){
     
     switch(TYPE){
         case "EXECUTE": 
+        {
             const details = data.DETAILS;
 
             Engine.get_instance().process_order(details.symbol,details.side,{
@@ -56,7 +57,15 @@ function process_queue(data: WorkerPayload){
                 q: details.quantity,
                 p: details.price,
             });
-        break;
+            break;
+        }
+        case "CANCEL": 
+        {
+            const details = data.DETAILS;
+            Engine.get_instance().cancel_order(details.symbol,details.client_id);
+            break;
+        }
+        
     }
 }
 

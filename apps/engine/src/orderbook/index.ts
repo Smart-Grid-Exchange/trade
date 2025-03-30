@@ -32,8 +32,6 @@ export class Orderbook{
     }
 
     public process_order(side: Side, order: Order){
-        this.is_locked = true;
-
         if(side === 'ASK'){
             if(this.bids.length === 0){
                 this.place_ask(order);
@@ -114,6 +112,8 @@ export class Orderbook{
                         order_quan = 0;
                         order_status = "FILLED";
                     }
+
+                    // ternary operator ??
                 }
 
             }
@@ -231,6 +231,37 @@ export class Orderbook{
                 });
             }
         }
+    }
+
+    public cancel_order(client_id: number){
+        for(let i = 0; i < this.bids.length; i++){
+            if(this.bids[i]!.client_id === client_id){
+                this.bids.splice(i,1);
+                this.is_locked = false;
+                return;
+            }
+        }
+        for(let i = 0; i < this.asks.length; i++){
+            if(this.asks[i]!.client_id === client_id){
+                this.asks.splice(i,1);
+                this.is_locked = false;
+                return;
+            }
+        }
+
+        throw new Error("Order does not exists.");
+    }
+
+    public lock_orderbook(){
+        if(this.is_locked === true)
+            throw new Error("Orderbook is already locked");
+
+        this.is_locked = true;
+    }
+
+    public unlock_orderbook(){
+        if(this.is_locked === false)
+            throw new Error("Orderbook is already unlocked");
 
         this.is_locked = false;
     }

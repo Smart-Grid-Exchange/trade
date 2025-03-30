@@ -1,18 +1,13 @@
 import { Orderbook } from "../orderbook";
 import type { Order,Side } from "../schema";
+import type { Buffer } from "../schema";
 
 type Market = string;
-
-type BufferedMessage = {
-    market: string,
-    side: Side,
-    order: Order,
-}
 
 export class Engine{
     private static instance: Engine;
     private orderbooks: Map<Market,Orderbook>;
-    private buffered_orders: BufferedMessage[] =[];
+    private buffered_orders: Buffer =[];
 
     private constructor(){
         this.orderbooks = new Map();
@@ -52,10 +47,34 @@ export class Engine{
 
         if(orderbook.is_locked)
         {
-            this.buffered_orders.push({market,side,order});
+            this.buffered_orders.push({ACTION: "EXECUTE", DETAILS: {
+                market,side,order
+            }});
             return;
         }
-
+        orderbook.lock_orderbook();
         orderbook.process_order(side,order);
+        // TODO: Process buffered orders before opening the lock again.
+        orderbook.unlock_orderbook();
+    }
+
+    public cancel_order(market: string,order_id: number){
+        const orderbook = this.get_orderbook(market); 
+
+        if(orderbook.is_locked){
+            this.buffered_orders.push({
+                ACTION: "CANCEL",
+                DETAILS: {
+                    market: market,
+                    client_id: order_id
+                }
+            })
+        }
+
+        try{
+            orderbook.cancel_order(order_id);
+        }catch(err){
+            console.log(err);
+        }
     }
 }
