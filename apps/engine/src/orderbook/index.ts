@@ -7,12 +7,14 @@ export class Orderbook{
     private asks: Order[];
     private last_updated_id: number;
     public is_locked:boolean;
+    public new_order_count: number; 
 
-    constructor(market: string){
+    constructor(market: string,new_order_count?: number){
         this.market = market;
         this.bids = [];
         this.asks = [];
         this.last_updated_id = 0;
+        this.new_order_count = new_order_count ?? 0;
         this.is_locked = false;
     }
 
@@ -96,7 +98,7 @@ export class Orderbook{
                         // the current bid quantity is less than order
                         // we remove the bid order from order book by setting 
                         // q = 0.00 and continue to match
-                        console.log(`Order ${this.bids[j]!.client_id} matched`);
+                        console.log(`Order ${this.bids[j]!.id} matched`);
                         // TODO: PUBLISH THE MATCHED ORDER TO PUB/SUB
 
                         order_quan -= order_q;
@@ -127,7 +129,7 @@ export class Orderbook{
                 assert(order_quan > 0);
 
                 this.place_ask({
-                    client_id: order.client_id,
+                    id: order.id,
                     p: order.p,
                     q: order_quan.toString().slice(2)
                 });
@@ -199,7 +201,7 @@ export class Orderbook{
                         // order quantity is more than current ask order on the orderbook
                         // we mark the ask order for removal by marking q = "0.00"
                         // and continue to match order for asks above it the orderbook
-                        console.log(`Order ${this.asks[j]!.client_id} matched`);
+                        console.log(`Order ${this.asks[j]!.id} matched`);
                         order_quan -= ask_q;
                         this.asks[j]!.q = "0.00";
                         order_status = "PART_FILLED";
@@ -225,24 +227,26 @@ export class Orderbook{
                 assert(order_quan > 0);
 
                 this.place_bid({
-                    client_id: order.client_id,
+                    id: order.id,
                     p: order.p,
                     q: order_quan.toString().slice(2)
                 });
             }
         }
+
+        this.new_order_count += 1;
     }
 
-    public cancel_order(client_id: number){
+    public cancel_order(id: string){
         for(let i = 0; i < this.bids.length; i++){
-            if(this.bids[i]!.client_id === client_id){
+            if(this.bids[i]!.id === id){
                 this.bids.splice(i,1);
                 this.is_locked = false;
                 return;
             }
         }
         for(let i = 0; i < this.asks.length; i++){
-            if(this.asks[i]!.client_id === client_id){
+            if(this.asks[i]!.id === id){
                 this.asks.splice(i,1);
                 this.is_locked = false;
                 return;

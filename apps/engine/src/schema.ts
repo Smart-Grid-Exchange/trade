@@ -4,19 +4,20 @@ export const worker_payload_schema = v.variant('TYPE',[
     v.object({
         TYPE: v.literal('EXECUTE'),
         DETAILS: v.object({
-            client_id: v.number(),
+            user_id: v.string(),
             order_type: v.union([v.literal("MARKET"),v.literal("LIMIT")]),
             price: v.string(),
             quantity: v.string(),
             side: v.union([v.literal("BID"),v.literal("ASK")]),
             symbol: v.string(),
-            time_in_force: v.string(),
+            time_in_force: v.union([v.literal("GTC"),v.literal("IOC"),v.literal("FOK")]),
         })
     }),
     v.object({
         TYPE: v.literal("CANCEL"),
         DETAILS: v.object({
-            client_id: v.number(),
+            user_id: v.string(),
+            id: v.string(),
             symbol: v.string(),
         })
     })
@@ -25,7 +26,7 @@ export const worker_payload_schema = v.variant('TYPE',[
 export type WorkerPayload = v.InferOutput<typeof worker_payload_schema>;
 
 export const order_schema = v.object({
-    client_id: v.number(),
+    id: v.string(),
     p: v.string(),
     q: v.string(),
 });
@@ -45,6 +46,7 @@ export const buffer = v.array(v.variant('ACTION', [
     v.object({
         ACTION: v.literal("EXECUTE"),
         DETAILS: v.object({
+            user_id: v.string(),
             market: v.string(),
             side: side_schema,
             order: order_schema
@@ -53,8 +55,9 @@ export const buffer = v.array(v.variant('ACTION', [
     v.object({
         ACTION: v.literal("CANCEL"),
         DETAILS: v.object({
+            user_id: v.string(),
             market: v.string(),
-            client_id: v.number(),
+            id: v.string(),
         })
     })
 ]));

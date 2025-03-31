@@ -27,8 +27,9 @@ export class Engine{
         {
             throw new Error(`Orderbook already exists for ${market} market`);
         }
-
-        this.orderbooks.set(market, new Orderbook(market));
+        // TODO: FETCH LAST ORDER
+        const last_order_count = -1;
+        this.orderbooks.set(market, new Orderbook(market,1 + last_order_count));
     }
 
     public get_orderbook(market: string){
@@ -42,31 +43,48 @@ export class Engine{
         return orderbook;
     }
 
-    public process_order(market: string, side: Side,order: Order){
+    public process_order(user_id: string,market: string, side: Side,order: Omit<Order,"id">){
         const orderbook = this.get_orderbook(market);
+
+        const order_id = this.assign_order_id(user_id,orderbook.market,orderbook.new_order_count);
 
         if(orderbook.is_locked)
         {
             this.buffered_orders.push({ACTION: "EXECUTE", DETAILS: {
-                market,side,order
+                user_id,
+                market,
+                side,
+                order: {
+                    q: order.q,
+                    p: order.p,
+                    id: order_id
+                }
             }});
             return;
         }
         orderbook.lock_orderbook();
-        orderbook.process_order(side,order);
+        orderbook.process_order(
+            side,
+            {
+                q: order.q,
+                p: order.p,
+                id: order_id
+            }
+        );
         // TODO: Process buffered orders before opening the lock again.
         orderbook.unlock_orderbook();
     }
 
-    public cancel_order(market: string,order_id: number){
+    public cancel_order(user_id: string,market: string,order_id: string){
         const orderbook = this.get_orderbook(market); 
 
         if(orderbook.is_locked){
             this.buffered_orders.push({
                 ACTION: "CANCEL",
                 DETAILS: {
+                    user_id,
                     market: market,
-                    client_id: order_id
+                    id: order_id
                 }
             })
         }
@@ -76,5 +94,11 @@ export class Engine{
         }catch(err){
             console.log(err);
         }
+    }
+
+    // PRIVATE METHODS
+
+    private assign_order_id(user_id: string,market: string,new_order_count: number){
+        return `${user_id}-SYB_${market}-ORD_${new_order_count}`;
     }
 }

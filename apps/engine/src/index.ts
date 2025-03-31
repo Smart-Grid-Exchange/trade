@@ -12,7 +12,7 @@ async function main(){
         initialise_engine();
         while(true){
             try{
-                const payload = await client.brPop("order",0);
+                const payload = await client.brPop("ATE",0);
                 if(payload == null)
                     continue;
 
@@ -52,8 +52,7 @@ function process_queue(data: WorkerPayload){
         {
             const details = data.DETAILS;
 
-            Engine.get_instance().process_order(details.symbol,details.side,{
-                client_id: details.client_id,
+            Engine.get_instance().process_order(details.user_id,details.symbol,details.side,{
                 q: details.quantity,
                 p: details.price,
             });
@@ -62,7 +61,7 @@ function process_queue(data: WorkerPayload){
         case "CANCEL": 
         {
             const details = data.DETAILS;
-            Engine.get_instance().cancel_order(details.symbol,details.client_id);
+            Engine.get_instance().cancel_order(details.user_id,details.symbol,details.id);
             break;
         }
         

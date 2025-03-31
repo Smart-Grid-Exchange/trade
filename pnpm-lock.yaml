@@ -32,6 +32,15 @@ importers:
       koa-router:
         specifier: ^13.0.1
         version: 13.0.1
+      minimalistic-assert:
+        specifier: ^1.0.1
+        version: 1.0.1
+      redis:
+        specifier: ^4.7.0
+        version: 4.7.0
+      valibot:
+        specifier: 1.0.0-rc.3
+        version: 1.0.0-rc.3(typescript@5.7.3)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -45,6 +54,9 @@ importers:
       '@types/koa-router':
         specifier: ^7.4.8
         version: 7.4.8
+      '@types/minimalistic-assert':
+        specifier: ^1.0.3
+        version: 1.0.3
 
   apps/engine:
     dependencies:
