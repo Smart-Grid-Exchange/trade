@@ -14,12 +14,15 @@
     "koa": "^2.15.4",
     "koa-bodyparser": "^4.4.1",
     "koa-router": "^13.0.1",
+    "minimalistic-assert": "^1.0.1",
+    "redis": "^4.7.0",
     "valibot": "1.0.0-rc.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/koa": "^2.15.0",
     "@types/koa-bodyparser": "^4.3.12",
-    "@types/koa-router": "^7.4.8"
+    "@types/koa-router": "^7.4.8",
+    "@types/minimalistic-assert": "^1.0.3"
   }
 }
