@@ -26,7 +26,7 @@ export class RedisManager{
         return new Promise<string>((resolve) => {
             this.subscriber.subscribe(client_id_str,(eng_resp) => {
                 this.subscriber.unsubscribe(client_id_str);
-                resolve(eng_resp);
+                resolve(JSON.parse(eng_resp));
             })
             this.publisher.lPush("ATE",message);
         })

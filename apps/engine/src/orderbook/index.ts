@@ -1,21 +1,31 @@
 import assert from "minimalistic-assert";
-import type { Order, OrderStatus, Side } from "../schema";
+import type { Order, OrderFill, OrderRequest, OrderStatus, Side } from "../schema";
 
 export class Orderbook{
     public market: string;
-    private bids: Order[];
-    private asks: Order[];
-    private last_updated_id: number;
+    public bids: Order[];
+    public asks: Order[];
+    public base_asset: string;
+    public quote_asset: string;
+    public market_price: string;
     public is_locked:boolean;
-    public new_order_count: number; 
+    public last_trade_id: number;
+    public last_update_id: number;
 
-    constructor(market: string,new_order_count?: number){
+    constructor(market: string,base_asset: string, quote_asset: string,market_price?: string, last_trade_id?: number,last_update_id?: number){
         this.market = market;
         this.bids = [];
         this.asks = [];
-        this.last_updated_id = 0;
-        this.new_order_count = new_order_count ?? 0;
+        this.base_asset = base_asset;
+        this.quote_asset = quote_asset;
+        this.market_price = market_price ?? "0.00";
+        this.last_trade_id = last_trade_id ?? 0;
+        this.last_update_id = last_update_id ?? 0;
         this.is_locked = false;
+    }
+
+    public get_ticker(){
+        return `${this.base_asset}_${this.quote_asset}`;
     }
 
     public place_bid(order: Order){
@@ -24,6 +34,7 @@ export class Orderbook{
         const insert_bid_at = this.find_insert_position("BID", Number.parseFloat(order.p));
 
         this.bids.splice(insert_bid_at,0,order);
+        this.last_update_id += 1;
     }
 
     public place_ask(order: Order){
@@ -31,13 +42,32 @@ export class Orderbook{
         const insert_ask_at = this.find_insert_position("ASK", Number.parseFloat(order.p));
 
         this.asks.splice(insert_ask_at,0,order);
+        this.last_update_id += 1;
     }
 
-    public process_order(side: Side, order: Order){
+    public process_order(side: Side, order: OrderRequest){
+
+        let order_status:OrderStatus = "NOT_FILLED";
+
+        let order_quan = Number.parseFloat(order.q);
+        let order_price_float = Number.parseFloat(order.p);
+
+        let fills: OrderFill[] = [];
+
         if(side === 'ASK'){
             if(this.bids.length === 0){
-                this.place_ask(order);
-                return;
+                this.place_ask({
+                    id: order.id,
+                    p: order.p,
+                    q: order.q,
+                    eq: "0.00",
+                    ca: order.ca,
+                    s: "ASK"
+                });
+                return {
+                    id: order.id,
+                    status: "NEW" as const,
+                };;
             }
 
             const cumulative_bids:{
@@ -67,12 +97,9 @@ export class Orderbook{
                 quantity: quantity_sum
             });
 
-            let order_status:OrderStatus = "NOT_FILLED";
-
-            let order_quan = Number.parseFloat(order.q);
-            let order_price_float = Number.parseFloat(order.p);
-
             const cbid_len = cumulative_bids.length;
+            // TODO: Implements fills
+            // TODO: Verify if last_order_id and market price are updated correctly
 
             for(let i = 0; i < cbid_len; i++){
                 const cbid_p = Number.parseFloat(cumulative_bids[i]!.price);
@@ -99,8 +126,15 @@ export class Orderbook{
                         // we remove the bid order from order book by setting 
                         // q = 0.00 and continue to match
                         console.log(`Order ${this.bids[j]!.id} matched`);
-                        // TODO: PUBLISH THE MATCHED ORDER TO PUB/SUB
-
+                        this.last_update_id += 1;
+                        this.last_trade_id += 1;
+                        this.market_price = this.bids[j]!.p;
+                        fills.push({
+                            market_order_id: this.bids[j]!.id,
+                            quan: this.float_to_str(order_quan),
+                            trade_id: this.last_trade_id,
+                            price: this.market_price,
+                        });
                         order_quan -= order_q;
                         this.bids[j]!.q = "0.00";
                         order_status = "PART_FILLED";
@@ -110,7 +144,16 @@ export class Orderbook{
                         // we update the quantity of bid order
                         // we declare the order as FILLED the next iteration is 
                         // gonna short circuit both inner and outer loop
-                        this.bids[j]!.q = (order_q - order_quan).toString().slice(2);
+                        this.bids[j]!.q = this.float_to_str(order_q - order_quan);
+                        this.last_update_id += 1;
+                        this.last_trade_id += 1;
+                        this.market_price = this.bids[j]!.p;
+                        fills.push({
+                            market_order_id: this.bids[j]!.id,
+                            quan: this.float_to_str(order_quan),
+                            trade_id: this.last_trade_id,
+                            price: this.market_price,
+                        });
                         order_quan = 0;
                         order_status = "FILLED";
                     }
@@ -127,11 +170,14 @@ export class Orderbook{
                 // if the order is not fully filled place 
                 // that on the order book
                 assert(order_quan > 0);
-
+                const eq = Number.parseFloat(order.q) - order_quan;
                 this.place_ask({
                     id: order.id,
                     p: order.p,
-                    q: order_quan.toString().slice(2)
+                    q: this.float_to_str(order_quan),
+                    eq: this.float_to_str(eq),
+                    ca: order.ca,
+                    s: side,
                 });
             }
             
@@ -139,8 +185,18 @@ export class Orderbook{
         else{
             if(this.asks.length === 0)
             {
-                this.place_bid(order);
-                return;
+                this.place_bid({
+                    id: order.id,
+                    p: order.p,
+                    q: order.q,
+                    eq: "0.00",
+                    ca: order.ca,
+                    s: side
+                });
+                return {
+                    id: order.id,
+                    status: "NEW" as const,
+                };
             }
 
             let cumulative_asks: {
@@ -170,12 +226,10 @@ export class Orderbook{
                 quantity: quantity_sum
             });
 
-            let order_status: OrderStatus = "NOT_FILLED";
-            let order_price_float = Number.parseFloat(order.p);
-            let order_quan = Number.parseFloat(order.q);
-
-
             let cask_len = cumulative_asks.length; 
+
+            // TODO: Implements fills
+            // TODO: Verify if last_order_id and market price are updated correctly
 
             for(let i = 0; i < cask_len; i++){
                 const cask_p = Number.parseFloat(cumulative_asks[i]!.price);
@@ -204,6 +258,15 @@ export class Orderbook{
                         console.log(`Order ${this.asks[j]!.id} matched`);
                         order_quan -= ask_q;
                         this.asks[j]!.q = "0.00";
+                        this.last_update_id += 1;
+                        this.last_trade_id += 1;
+                        this.market_price = this.asks[j]!.p;
+                        fills.push({
+                            price: this.market_price,
+                            quan: this.float_to_str(ask_q),
+                            market_order_id: this.asks[j]!.id,
+                            trade_id: this.last_trade_id,
+                        })
                         order_status = "PART_FILLED";
                     }else{
                         // order quantity is less than or equal to current ask order on the orderbook
@@ -211,7 +274,16 @@ export class Orderbook{
                         // mark the order as FILLED and set order_quan = 0
                         // the next iteration of loops are going to be short circuited
                         console.log(`New order filled completely`);
-                        this.asks[j]!.q = (ask_q - order_quan).toString().slice(2);
+                        this.asks[j]!.q = this.float_to_str(ask_q - order_quan);
+                        this.last_update_id += 1;
+                        this.last_trade_id += 1; 
+                        this.market_price = this.asks[j]!.p;
+                        fills.push({
+                            price: this.market_price,
+                            quan: this.float_to_str(order_quan),
+                            market_order_id: this.asks[j]!.id,
+                            trade_id: this.last_trade_id,
+                        });
                         order_status = "FILLED";
                         order_quan = 0;
                     }
@@ -225,35 +297,89 @@ export class Orderbook{
                 // if order is not fully FILLED then place it
                 // on the orderbook
                 assert(order_quan > 0);
-
+                const eq = Number.parseFloat(order.q) - order_quan;
                 this.place_bid({
                     id: order.id,
                     p: order.p,
-                    q: order_quan.toString().slice(2)
+                    q: this.float_to_str(order_quan),
+                    eq: this.float_to_str(eq),
+                    ca: order.ca,
+                    s: side
                 });
             }
+
         }
 
-        this.new_order_count += 1;
+        if(order_status === "NOT_FILLED"){
+            return {
+                id: order.id,
+                status: "NEW" as const,
+            };
+        }
+        else{
+            const executed_quan = Number.parseFloat(order.q) - order_quan;
+            return {
+                id: order.id,
+                status: order_status,
+                executed_quan: this.float_to_str(executed_quan),
+                quan: this.float_to_str(order_quan),
+                fills,
+            };
+        }
+
     }
 
     public cancel_order(id: string){
+        let order;
         for(let i = 0; i < this.bids.length; i++){
             if(this.bids[i]!.id === id){
+                const bid = this.bids[i]!;
+                order = {
+                    symbol: this.market,
+                    id: bid.id,
+                    price: bid.p,
+                    quan: bid.q,
+                    exec_quan: bid.eq,
+                    created_at: bid.ca,
+                    side: bid.s,
+                };
                 this.bids.splice(i,1);
                 this.is_locked = false;
-                return;
             }
         }
         for(let i = 0; i < this.asks.length; i++){
             if(this.asks[i]!.id === id){
+                const ask = this.asks[i]!;
+                order = {
+                    symbol: this.market,
+                    id: ask.id,
+                    price: ask.p,
+                    quan: ask.q,
+                    exec_quan: ask.eq,
+                    created_at: ask.ca,
+                    side: ask.s,
+                }
                 this.asks.splice(i,1);
                 this.is_locked = false;
-                return;
             }
         }
 
-        throw new Error("Order does not exists.");
+        return order;
+    }
+
+    public get_depth(){
+        const asks = this.asks.map((ask) => [ask.p,ask.q] as const);
+        const bids = this.bids.map((bid) => [bid.p,bid.q] as const);
+        return {
+            asks,
+            bids,
+            last_update_id: this.last_update_id.toString(),
+            timestamp: Date.now()
+        }
+    }
+
+    public get_open_order(order_id: string){
+        return [...this.asks,...this.bids].find((o) => o.id === order_id);
     }
 
     public lock_orderbook(){
@@ -270,6 +396,17 @@ export class Orderbook{
         this.is_locked = false;
     }
 
+    public get_snapshot(){
+        const asks = this.asks.map((ask) => [ask.p,ask.q] as const);
+        const bids = this.bids.map((bid) => [bid.p,bid.q] as const);
+        return {
+            market_price: this.market_price,
+            last_trade_id: this.last_trade_id,
+            asks: asks,
+            bids: bids
+        }
+    }
+
     private find_insert_position(side: "BID" | "ASK", order_price: number){
         const arr = side  === "ASK" ? this.asks : this.bids;
 
@@ -277,58 +414,70 @@ export class Orderbook{
 
         let insert_at = 0;
 
-        while(low <= high){
-            const mid = low + ((high - low) << 1);
-            const price_mid_str = arr[mid]?.p;
-            assert(price_mid_str !== undefined, "Bid or Ask should exist");
-
-            const price = Number.parseFloat(price_mid_str);
-
-            if(price == order_price)
-                return mid;
-            else if(price > order_price)
-            {
-                high = mid - 1;
-
-                if(mid === 0)
+        try{
+            while(low <= high){
+                const mid = low + ((high - low) << 1);
+                const price_mid_str = arr[mid]?.p;
+                assert(price_mid_str !== undefined, "Bid or Ask should exist");
+    
+                const price = Number.parseFloat(price_mid_str);
+    
+                if(price == order_price)
+                    return mid;
+                else if(price > order_price)
                 {
-                    insert_at = mid;
-                    // improve this logic to promote quantity based preference.
-                    break;
+                    high = mid - 1;
+    
+                    if(mid === 0)
+                    {
+                        insert_at = mid;
+                        // improve this logic to promote quantity based preference.
+                        break;
+                    }
+    
+                    const niegh_price_str = arr[mid-1]?.p;
+                    assert(niegh_price_str !== undefined);
+                    const niegh_price = Number.parseFloat(niegh_price_str);
+    
+                    if(niegh_price < price)
+                    {
+                        insert_at = mid;
+                        break;
+                    }
                 }
-
-                const niegh_price_str = arr[mid-1]?.p;
-                assert(niegh_price_str !== undefined);
-                const niegh_price = Number.parseFloat(niegh_price_str);
-
-                if(niegh_price < price)
-                {
-                    insert_at = mid;
-                    break;
+                else{
+                    low = mid + 1;
+    
+                    if(mid === arr.length - 1)
+                    {
+                        insert_at = mid;
+                        break;
+                    }
+    
+                    const niegh_price_str = arr[mid+1]?.p;
+                    assert(niegh_price_str !== undefined);
+                    const niegh_price = Number.parseFloat(niegh_price_str);
+    
+                    if(niegh_price > price)
+                    {
+                        insert_at = mid;
+                        break;
+                    }
                 }
             }
-            else{
-                low = mid + 1;
-
-                if(mid === arr.length - 1)
-                {
-                    insert_at = mid;
-                    break;
-                }
-
-                const niegh_price_str = arr[mid+1]?.p;
-                assert(niegh_price_str !== undefined);
-                const niegh_price = Number.parseFloat(niegh_price_str);
-
-                if(niegh_price > price)
-                {
-                    insert_at = mid;
-                    break;
-                }
-            }
+    
+            return insert_at;
+        }
+        catch(err){
+            console.log('ERROR WHILE INSERTING ORDER');
+            console.log(err);
+            return 0;
         }
 
-        return insert_at;
+    }
 
+    private float_to_str(num: number){
+        const fnum = num.toFixed(2);
+        return fnum.toString();
     }
 }

@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+url      = env("DATABASE_URL")
+}
+
+
+enum State {
+  OPEN
+  CLOSED
+  CANCEL_ONLY
+  LIMIT_ONLY
+}
+
+enum Side {
+  BID
+  ASK
+}
+
+enum Status {
+  NEW
+  PART_FILLED
+  FILLED
+  EXPIRED
+  CANCELLED
+}
+
+model Market {
+  id Int @id @default(autoincrement())
+  symbol String @unique
+  volume BigInt
+  price Decimal @db.Decimal(6,2)
+  state State
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  orders Order[]
+}
+
+model Order{
+  id String @id
+  client_id String @unique
+  price Decimal @db.Decimal(6,2)
+  quantity Decimal @db.Decimal(6,2)
+  executed_quantity Decimal @db.Decimal(6,2)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  status Status @default(NEW) 
+  side Side
+
+  marketId String
+  market Market @relation(fields: [marketId], references: [symbol])
+
+  userId String
+  user User @relation(fields: [userId], references: [username])
+
+  @@index([status])
+  @@index([side])
+}
+
+model User{
+  id Int @id @default(autoincrement())
+  username String @unique
+  password String
+
+  orders Order[]
+
+  @@unique([username,password])
+}

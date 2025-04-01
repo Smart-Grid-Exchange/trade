@@ -1,7 +1,6 @@
 import {createClient} from "redis";
 import * as v from "valibot";
 import { WorkerPayload, worker_payload_schema } from "./schema";
-import { MARKETS } from "./const";
 import { Engine } from "./engine";
 
 const client = createClient();
@@ -9,7 +8,7 @@ const client = createClient();
 async function main(){
     try{
         await client.connect();
-        initialise_engine();
+        Engine.get_instance().health_check();
         while(true){
             try{
                 const payload = await client.brPop("ATE",0);
@@ -32,17 +31,6 @@ async function main(){
 }
 
 
-async function initialise_engine(){
-    MARKETS.forEach((market) => {
-        try{
-            Engine.get_instance().add_orderbook(market)
-        }catch(err){
-            console.log(err);
-        }
-    });
-
-    console.log("Engine successfully initialised");
-}
 
 function process_queue(data: WorkerPayload){
     const TYPE = data.TYPE;
@@ -50,21 +38,35 @@ function process_queue(data: WorkerPayload){
     switch(TYPE){
         case "EXECUTE": 
         {
-            const details = data.DETAILS;
+            const details = data.PAYLOAD;
 
             Engine.get_instance().process_order(details.user_id,details.symbol,details.side,{
+                client_id: details.client_id,
                 q: details.quantity,
                 p: details.price,
+                ca: details.created_at,
             });
             break;
         }
         case "CANCEL": 
         {
-            const details = data.DETAILS;
-            Engine.get_instance().cancel_order(details.user_id,details.symbol,details.id);
+            const details = data.PAYLOAD;
+            Engine.get_instance().cancel_order(details.user_id,details.symbol,{
+                client_id: details.client_id,
+                id: details.id
+            });
             break;
         }
-        
+        case "DEPTH": 
+        {
+            const details = data.PAYLOAD;
+            Engine.get_instance().get_depth(details.symbol,details.user_id);
+            break;
+        }
+        case "OPEN_ORDER":{
+            const details = data.PAYLOAD;
+            Engine.get_instance().get_open_order(details.symbol,details.id,details.client_id);
+        }
     }
 }
 
