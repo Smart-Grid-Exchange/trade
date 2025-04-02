@@ -374,7 +374,8 @@ export class Orderbook{
             asks,
             bids,
             last_update_id: this.last_update_id.toString(),
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            market_price: this.market_price,
         }
     }
 

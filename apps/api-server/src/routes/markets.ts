@@ -9,11 +9,14 @@ router.get("/",async (ctx) => {
     try{
         const market = await prisma.market.findMany({
             where: {},
-            omit: {
-                volume: true
+        });
+        const mm = market.map((m) => {
+            return {
+                ...m,
+                volume: m.volume.toString()
             }
         });
-        ctx.body = market;
+        ctx.body = mm;
         ctx.state = 200;
     }catch(err){
         console.log(err);

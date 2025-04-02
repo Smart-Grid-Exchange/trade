@@ -65,8 +65,9 @@ export const engine_resp_schema = v.variant("TYPE", [
         PAYLOAD: v.object({
             bids: v.array(v.tuple([v.string(),v.string()])),
             asks: v.array(v.tuple([v.string(),v.string()])),
-            last_update_id: v.number(),
+            last_update_id: v.string(),
             timestamp: v.number(),
+            market_price: v.string(),
         })
     })
 ])

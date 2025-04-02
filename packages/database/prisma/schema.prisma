@@ -46,6 +46,7 @@ model Market {
 
 
   orders Order[]
+  trades Trade[]
 }
 
 model Order{
@@ -77,4 +78,15 @@ model User{
   orders Order[]
 
   @@unique([username,password])
+}
+
+model Trade {
+  id String @id
+  price Decimal @db.Decimal(6,2)
+  quantity Decimal @db.Decimal(6,2)
+  timestamp Decimal @db.Decimal(6,2)
+
+  marketId String
+  market Market @relation(fields: [marketId], references: [symbol])
+
 }
