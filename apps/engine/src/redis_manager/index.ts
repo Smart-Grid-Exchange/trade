@@ -17,12 +17,12 @@ export class RedisManager{
         return RedisManager.instance;
     }
 
-    public publish_to_event_queue(order_id: string,msg: string){
-        this.client.publish(order_id,msg);
+    public publish_to_event_queue(room_id: string,msg: string){
+        this.client.publish(room_id,msg);
     }
 
-    public publish_to_api(order_id: string, msg: string){
-        this.client.publish(order_id, msg);
+    public publish_to_api(client_id: string, msg: string){
+        this.client.publish(client_id, msg);
     }
 
     public push_to_db_queue(msg: string){

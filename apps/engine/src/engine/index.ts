@@ -2,9 +2,10 @@ import fs from "fs";
 import * as v from "valibot";
 import { Orderbook } from "../orderbook";
 import { orderbook_snapshot, type Order,type OrderbookSnapshot,type Side } from "../schema";
-import type { Buffer } from "../schema";
+import type { Buffer, WSDepthStream, WSTradeStream } from "../schema";
 import { MARKETS } from "../const";
 import { RedisManager } from "../redis_manager";
+import { epoch_in_micros } from "../utils";
 
 type Market = string;
 
@@ -113,6 +114,11 @@ export class Engine{
             // TODO: Process buffered orders before opening the lock again.
             orderbook.unlock_orderbook();
             RedisManager.get_instance().publish_to_api(order.client_id.toString(),JSON.stringify(publisher_payload));
+            this.stream_depth(market,order.p,side);
+            if(processed_order.fills && processed_order.fills.length > 0){
+                this.stream_trade(market,order_id,side,processed_order.fills);
+            }
+            
         }catch(err){
             console.log(err);
             const publisher_payload = {
@@ -149,6 +155,10 @@ export class Engine{
                 PAYLOAD: possibly_deleted_order
             }
             RedisManager.get_instance().publish_to_api(order_ids.client_id.toString(),JSON.stringify(publisher_payload));
+            
+            if(possibly_deleted_order !== undefined){
+                this.stream_depth(market,possibly_deleted_order.price,possibly_deleted_order.side);
+            }
         }catch(err){
             console.log(err);
         }
@@ -244,5 +254,94 @@ export class Engine{
             base_asset: assets[0]!,
             quote_asset: assets[1]!
         };
+    }
+
+    // --------------------- STREAMS -------------------
+
+    private stream_depth(symbol: string, price: string, side: Side){
+        const timestamp_mus = epoch_in_micros();
+
+        const orderbook = this.get_orderbook(symbol);
+
+        let inc_depth: WSDepthStream["a"] = [];
+
+        if(side === "BID"){
+            const ubids = orderbook.bids.filter((b) => b.p === price);
+            let cbid_qt = 0.00;
+
+            ubids.forEach((ubid) => {
+                cbid_qt += Number.parseFloat(ubid.q);
+            });
+
+            inc_depth.push([price,cbid_qt.toFixed(2).toString()]);
+        }else{
+            const uasks = orderbook.asks.filter((uask) => uask.p === price);
+            let cask_qt = 0.00;
+
+            uasks.forEach((uask) => {
+                cask_qt += Number.parseFloat(uask.q);
+            });
+
+            inc_depth.push([price,cask_qt.toFixed(2).toString()]);
+        }
+
+        if(inc_depth.length === 0){
+            // when the order gets completely removed off the orderbook
+            // due to cancellation or trade -- we need to stream it to the 
+            // client. The client should have to logic to remove bid or ask
+            // with updated quantity from the rendered view.
+            inc_depth.push([price,"0.00"]);
+        }
+
+        
+        const stream_payload: WSDepthStream = {
+            e: "depth",
+            E: timestamp_mus,
+            s: symbol,
+            a: side === "ASK" ? inc_depth : [],
+            b: side === "BID" ? inc_depth : [],
+            U: orderbook.last_update_id,
+            u: orderbook.last_update_id,
+            T: timestamp_mus
+        };
+
+        RedisManager.get_instance().publish_to_event_queue(`depth@${symbol}`,JSON.stringify({
+            stream: `depth@${symbol}`,
+            data: stream_payload
+        }));
+    }
+
+    private stream_trade(symbol: string, order_id: string, side: Side, fills: {
+        price: string;
+        quan: string;
+        trade_id: number;
+        market_order_id: string;
+    }[]){
+        fills.forEach((fill) => {
+            const timestamp_mus = epoch_in_micros();
+            const stream_payload: WSTradeStream = {
+                e: "trade",
+                E: timestamp_mus,
+                s: symbol,
+                p: fill.price,
+                q: fill.quan,
+                b: side === "BID" ? order_id : fill.market_order_id,
+                a: side === "BID" ? fill.market_order_id : order_id,
+                t: fill.trade_id,
+                T: timestamp_mus,
+            }
+
+            RedisManager.get_instance().publish_to_event_queue(`trade@${symbol}`,JSON.stringify({
+                stream: `trade@${symbol}`,
+                data: stream_payload
+            }));
+            // if the order wasn't filled initially the client would have "SUBSCRIBE"d to 
+            // channel with uid as order.id -- we publish to it channel notifying the client
+            // about the order getting FILLED.
+            RedisManager.get_instance().publish_to_event_queue(`${fill.market_order_id}`,JSON.stringify({
+                stream: `${fill.market_order_id}`,
+                data: stream_payload
+            }));
+        })
     }
 }

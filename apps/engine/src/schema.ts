@@ -112,3 +112,30 @@ export const orderbook_snapshot = v.object({
 
 export type OrderbookSnapshot = v.InferOutput<typeof orderbook_state>;
 
+export const ws_depth_stream_schema = v.object({
+    e: v.string(),
+    E: v.number(),
+    s: v.string(),
+    a: v.array(v.tuple([v.string(),v.string()])),
+    b: v.array(v.tuple([v.string(),v.string()])),
+    U: v.number(),
+    u: v.number(),
+    T: v.number(),
+});
+
+export type WSDepthStream = v.InferOutput<typeof ws_depth_stream_schema>;
+
+export const ws_trade_stream_schema = v.object({
+    e: v.string(),
+    E: v.number(),
+    s: v.string(),
+    p: v.string(),
+    q: v.string(),
+    b: v.string(),
+    a: v.string(),
+    t: v.number(),
+    T: v.number(),
+    m: v.optional(v.boolean()), // is buyers a maker -- not implemented rn.
+});
+
+export type WSTradeStream = v.InferOutput<typeof ws_trade_stream_schema>;

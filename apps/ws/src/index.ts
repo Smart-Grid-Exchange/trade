@@ -21,7 +21,7 @@ let client_count = 0;
 
 
 type StreamPayload = {
-    method: 'JOIN',
+    method: 'CONNECT',
     username: string,
 } | {
     method: 'SUBSCRIBE' | 'UNSUBSCRIBE',
@@ -38,7 +38,7 @@ async function init_ws_server(){
             const data:StreamPayload = JSON.parse(`${raw_data}`);
             const method = data.method;
             switch(method){
-                case "JOIN": {
+                case "CONNECT": {
                     const username = data.username;
                     console.log(username + "joined");
                     online_clients[ws_id] = {
