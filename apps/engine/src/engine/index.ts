@@ -117,6 +117,16 @@ export class Engine{
             this.stream_depth(market,order.p,side);
             if(processed_order.fills && processed_order.fills.length > 0){
                 this.stream_trade(market,order_id,side,processed_order.fills);
+                const timestamp = epoch_in_micros();
+                const iso_timestamp = new Date(Math.floor(timestamp/1000)).toISOString();
+                processed_order.fills.forEach((fill) => {
+                    this.push_trade_to_db_queue({
+                        price: fill.price,
+                        iso_timestamp: iso_timestamp,
+                        quantity: fill.quan,
+                        symbol: market
+                    })
+                })
             }
             
         }catch(err){
@@ -343,5 +353,22 @@ export class Engine{
                 data: stream_payload
             }));
         })
+    }
+
+
+    // ------------------------------ PUSH TO DB QUEUE ------------
+
+    private push_trade_to_db_queue(trade:{
+        price: string,
+        iso_timestamp: string,
+        quantity: string,
+        symbol: string,
+    }){
+        const msg = JSON.stringify({
+            TYPE: 'trade',
+            PAYLOAD: trade,
+        });
+        
+        RedisManager.get_instance().push_to_db_queue(msg);
     }
 }

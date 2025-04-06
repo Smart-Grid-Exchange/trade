@@ -26,6 +26,7 @@ export class RedisManager{
     }
 
     public push_to_db_queue(msg: string){
-        this.client.lPush("DB",msg);
+        // ETDB: Engine to DB
+        this.client.lPush("ETDB",msg);
     }
 }

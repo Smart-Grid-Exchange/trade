@@ -1,0 +1,23 @@
+{
+  "name": "db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/* --platform=node --bundle --outdir=dist",
+    "dev": "pnpm run build && node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "esbuild": "^0.23.1"
+  },
+  "dependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "pg": "^8.14.1",
+    "redis": "^4.7.0",
+    "valibot": "1.0.0-rc.3"
+  }
+}

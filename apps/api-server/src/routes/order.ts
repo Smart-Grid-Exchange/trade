@@ -34,40 +34,49 @@ const get_open_order_api_req_schema = v.object({
 router.get("/",async(ctx) => {
     try{
         const raw_req_body = ctx.request.query;
-        const req_body = v.parse(get_open_order_api_req_schema,raw_req_body);
-        // TODO: OBTAIN USER_ID FROM COOKIE
-        const user_id = "USER_FOO";
-
-        const engine_payload = {
-            TYPE: "OPEN_ORDER",
-            PAYLOAD: {
-                client_id: req_body.client_id,
-                id: req_body.id,
-                user_id,
-                symbol: req_body.symbol,
-            }
-        }
-        const raw_engine_resp = await RedisManager.get_instance()
-        .send_and_await(req_body.client_id.toString(),JSON.stringify(req_body));
-
-        const api_resp = v.parse(engine_resp_schema,raw_engine_resp);
-        assert(api_resp.TYPE === "OPEN_ORDER");
-
-        const api_resp_data = api_resp.PAYLOAD;
-        if(api_resp_data === undefined){
-            ctx.status = 404;
-            ctx.body = {
-                code: "RESOURCE_NOT_FOUND",
-                msg: "ORDER NOT FOUND"
-            }
+        const parsed_req_body = v.safeParser(get_open_order_api_req_schema)(raw_req_body);
+        if(parsed_req_body.success === false){
+           ctx.body = {
+            code: "INVALID_BODY_SCHEMA",
+            msg: parsed_req_body.issues
+           }
             return;
         }
 
-        ctx.body = {
-            client_id: req_body.client_id,
-            ...api_resp_data
-        };
-        ctx.status = 200;
+         // TODO: OBTAIN USER_ID FROM COOKIE
+         const user_id = "USER_FOO";
+         const req_body = parsed_req_body.output;
+         const engine_payload = {
+             TYPE: "OPEN_ORDER",
+             PAYLOAD: {
+                 client_id: req_body.client_id,
+                 id: req_body.id,
+                 user_id,
+                 symbol: req_body.symbol,
+             }
+         }
+         const raw_engine_resp = await RedisManager.get_instance()
+         .send_and_await(req_body.client_id.toString(),JSON.stringify(req_body));
+
+         const api_resp = v.parse(engine_resp_schema,raw_engine_resp);
+         assert(api_resp.TYPE === "OPEN_ORDER");
+
+         const api_resp_data = api_resp.PAYLOAD;
+         if(api_resp_data === undefined){
+             ctx.status = 404;
+             ctx.body = {
+                 code: "RESOURCE_NOT_FOUND",
+                 msg: "ORDER NOT FOUND"
+             }
+             return;
+         }
+
+         ctx.body = {
+             client_id: req_body.client_id,
+             ...api_resp_data
+         };
+         ctx.status = 200;
+
     }catch(err){
         ctx.status = 500;
         ctx.body = {
@@ -79,8 +88,18 @@ router.get("/",async(ctx) => {
 
 router.post("/",async(ctx) => {
     try{
-        const body = v.parse(execute_order_api_req_schema,ctx.request.body);
+        const raw_req_body = ctx.request.body;
+        console.log(raw_req_body)
+        const parsed_req_body = v.safeParser(execute_order_api_req_schema)(raw_req_body);
+        if(parsed_req_body.success === false){
+            ctx.body = {
+             code: "INVALID_BODY_SCHEMA",
+             msg: parsed_req_body.issues
+            }
+             return;
+         }
         // TODO: Fetch user_id from the ctx -- saved from the middleware
+        const body = parsed_req_body.output;
         const created_at = Date.now();
         const engine_payload = {
             TYPE: "EXECUTE",
