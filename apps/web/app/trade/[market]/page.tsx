@@ -8,14 +8,20 @@ import React,{ useState } from "react";
 import { ws_trade_stream_schema } from "@/lib/types/trade";
 import { Orderbook } from "./orderbook";
 import PlaceOrder from "./place_order";
+import TradeView from "./trade_view";
+import Header from "./header";
+import { useRecoilValueLoadable } from "recoil";
+import { depth_state } from "@/store/atom/depth";
 
 type WSDepthStream = v.InferOutput<typeof ws_depth_stream_schema>;
 
-export default function Trade({params}: {params: Promise<{ market: string}>}){
-    const {market} = React.use(params);
+export default function Trade({params}: {params: { market: string}}){
+    const {market} = params;
     const [bids,setBids] = useState<WSDepthStream["b"]>([]);
     const [asks,setAsks] = useState<WSDepthStream["a"]>([]);
+    const depthState = useRecoilValueLoadable(depth_state({symbol: market}));
     const [trades,setTrades] = useState<{p: string, q: string, t: string, id: number}[]>([]);
+    const [marketPrice, setMarketPrice] = useState<string>("");
 
     function depth_stream_callback(raw_data: string){
         const data = v.parse(ws_depth_stream_schema,raw_data);
@@ -61,7 +67,8 @@ export default function Trade({params}: {params: Promise<{ market: string}>}){
         setTrades((old_trades) => {
             const timestamp = new Date(data.E / 1000).toLocaleTimeString('en-us');
             return [{id: data.t, p: data.p, q: data.q, t: timestamp},...old_trades];
-        })
+        });
+        setMarketPrice(data.p);
     }
     useEffect(() => {
         // TODO: PASS USERNAME HERE
@@ -80,10 +87,24 @@ export default function Trade({params}: {params: Promise<{ market: string}>}){
         }
     },[market]);
 
+    useEffect(() => {
+        if(depthState.state === "hasValue"){
+            setAsks(depthState.getValue()?.asks ?? []);
+            setBids(depthState.getValue()?.bids ?? []);
+        }
+    },[depthState])
+
+
     return(
-        <div className="flex justify-end gap-2">
-            <Orderbook bids={bids} asks={asks} trades={trades} price={trades.slice(-1)[0]?.p ?? ""}/>
-            <PlaceOrder symbol={market} market_price={trades.slice(-1)[0]?.p ?? "100"}/>
+        <div className="flex flex-row gap-1">
+            <div className="flex flex-col w-full">
+                <Header symbol={market} price={marketPrice}/>
+                {depthState.state === "hasValue" ? <div className="flex flex-row gap-1">
+                    <TradeView market={market}/>
+                    <Orderbook bids={bids} asks={asks} trades={trades} price={marketPrice}/>
+                </div> : <div>Loading..</div>}
+            </div>
+            <PlaceOrder symbol={market} market_price={marketPrice}/>
         </div>
     )
 }

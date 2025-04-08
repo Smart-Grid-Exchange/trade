@@ -100,8 +100,8 @@ export type OrderFill = v.InferOutput<typeof order_fill_schema>;
 export const orderbook_state = v.object({
     market: v.string(),
     last_trade_id: v.number(),
-    asks: v.array(v.tuple([v.string(),v.string()])),
-    bids: v.array(v.tuple([v.string(),v.string()])),
+    asks: v.array(order_schema),
+    bids: v.array(order_schema),
     market_price: v.string(),
 });
 

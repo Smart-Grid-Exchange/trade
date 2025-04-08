@@ -64,7 +64,7 @@ export class SignalManager{
         }
     }
 
-    public static get_instance(username?: string){
+    public static get_instance(username = "foo"){
         if(SignalManager.instance === undefined){
             assert(username !== undefined, "Caller must pass username during singleton initialisation");
             SignalManager.instance = new SignalManager(username);

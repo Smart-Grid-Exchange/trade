@@ -21,7 +21,7 @@ import { gen_client_id } from "@/util/gen_client_id";
 
 export default function PlaceOrder({symbol,market_price}:{symbol: string,market_price: string}){
     return(
-        <Tabs defaultValue="bid" className="w-[500px] bg-slate-100 p-2">
+        <Tabs defaultValue="bid" className="w-[370px] bg-slate-100 rounded-md h-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="bid">Buy</TabsTrigger>
                 <TabsTrigger value="ask">Sell</TabsTrigger>
@@ -38,8 +38,8 @@ export default function PlaceOrder({symbol,market_price}:{symbol: string,market_
 
 function OrderTypeTabBox({side,market_price,symbol}:{side: "BUY" | "SELL", market_price: string, symbol: string}){
     return(
-        <Tabs defaultValue="limit" className="w-[500px] p-8">
-            <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="limit" className="w-[370px] my-1">
+            <TabsList className="grid grid-cols-2">
                 <TabsTrigger value="limit">Limit</TabsTrigger>
                 <TabsTrigger value="market">Market</TabsTrigger>
             </TabsList>
@@ -117,7 +117,7 @@ function MarketOrderBox({side, market_price, symbol}:{side: "BUY" | "SELL", mark
     }
 
     return(
-        <Card>
+        <Card className="h-full">
             <Form {...form}>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <CardContent>
@@ -264,10 +264,10 @@ function LimitOrderBox({
     }
 
     return(
-        <Card>
+        <Card className="h-full bg-inherit border-0 rounded-none">
            <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <CardContent className="flex flex-col gap-2">
+                <CardContent className="flex flex-col gap-3">
                     <FormField
                     control={control}
                     name="price"

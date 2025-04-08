@@ -1,37 +1,19 @@
-'use server'
+'use client'
 
 import { MarketTable } from "@/components/markets";
-import { dashboard_markets_schema } from "@/lib/types/market";
-import * as v from "valibot";
+import { tickers_state } from "@/store/atom/tickers";
+import { useRecoilValueLoadable } from "recoil";
 
-async function get_markets(){
-  try{
-    const resp = await fetch("http://localhost:3001/api/v1/tickers",{
-      credentials: "include"
-    });
-    const raw_data = await resp.json();
-    const parsed = v.safeParser(dashboard_markets_schema)(raw_data);
-    if(parsed.success){
-      return parsed.output;
-    }
-    console.log(parsed.issues)
-    return [];
-  }catch(err){
-    console.log(err);
-    return undefined;
-  }
-}
-
-export default async function Home(){
-  const markets = await get_markets();
+export default function Home(){
+  const tickersState = useRecoilValueLoadable(tickers_state);
   return(
     <div>
       {
-      markets !== undefined ? 
+      tickersState.state === "hasValue" ? 
       <div className="flex">
-        <MarketTable markets={markets}/>
+        <MarketTable tickers={tickersState.getValue()}/>
       </div> : 
-      <div>hello</div>
+      <div>Loading</div>
       }
     </div>
   )

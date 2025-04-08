@@ -12,10 +12,10 @@ export class Orderbook{
     public last_trade_id: number;
     public last_update_id: number;
 
-    constructor(market: string,base_asset: string, quote_asset: string,market_price?: string, last_trade_id?: number,last_update_id?: number){
+    constructor(market: string,base_asset: string, quote_asset: string,bids: Order[], asks: Order[],market_price?: string, last_trade_id?: number,last_update_id?: number){
         this.market = market;
-        this.bids = [];
-        this.asks = [];
+        this.bids = bids;
+        this.asks = asks;
         this.base_asset = base_asset;
         this.quote_asset = quote_asset;
         this.market_price = market_price ?? "0.00";
@@ -368,11 +368,69 @@ export class Orderbook{
     }
 
     public get_depth(){
-        const asks = this.asks.map((ask) => [ask.p,ask.q] as const);
-        const bids = this.bids.map((bid) => [bid.p,bid.q] as const);
+        const cumulative_bids:{
+            price: string,
+            quantity: number,
+        }[] = [];
+
+        if(this.bids.length > 0){
+            let prev_price = this.bids[0]!.p;
+            let quantity_sum = Number.parseFloat(this.bids[0]!.q);
+
+            for(let i = 1; i < this.bids.length; i++){
+                if(this.bids[i]!.p === prev_price){
+                    quantity_sum += Number.parseFloat(this.bids[i]!.q)
+                }else{
+                    cumulative_bids.push({
+                        price: prev_price,
+                        quantity: quantity_sum,
+                    });
+
+                    prev_price = this.bids[i]!.p;
+                    quantity_sum = Number.parseFloat(this.bids[i]!.q);
+                }
+            }
+
+            cumulative_bids.push({
+                price: prev_price,
+                quantity: quantity_sum
+            });
+        }
+
+        let cumulative_asks: {
+            price: string,
+            quantity: number
+        }[] = [];
+
+        if(this.asks.length > 0){
+            let prev_price = this.asks[0]!.p;
+            let quantity_sum = Number.parseFloat(this.asks[0]!.q);
+
+            for(let i = 1; i < this.asks.length; i++){
+                if(prev_price === this.asks[i]!.p){
+                    quantity_sum += Number.parseFloat(this.asks[i]!.q);
+                } else{
+                    cumulative_asks.push({
+                        price: prev_price,
+                        quantity: quantity_sum
+                    });
+
+                    prev_price = this.asks[i]!.p;
+                    quantity_sum = Number.parseFloat(this.asks[i]!.q);
+                }
+            }
+
+            cumulative_asks.push({
+                price: prev_price,
+                quantity: quantity_sum
+            });
+        }
+
+        const asks = cumulative_asks.map((ask) => [ask.price,ask.quantity.toFixed(2)] as const);
+        const bids = cumulative_bids.map((bid) => [bid.price,bid.quantity.toFixed(2)] as const);
         return {
-            asks,
-            bids,
+            asks: asks,
+            bids: bids,
             last_update_id: this.last_update_id.toString(),
             timestamp: Date.now()
         }
@@ -397,13 +455,11 @@ export class Orderbook{
     }
 
     public get_snapshot(){
-        const asks = this.asks.map((ask) => [ask.p,ask.q] as const);
-        const bids = this.bids.map((bid) => [bid.p,bid.q] as const);
         return {
             market_price: this.market_price,
             last_trade_id: this.last_trade_id,
-            asks: asks,
-            bids: bids
+            asks: this.asks,
+            bids: this.bids
         }
     }
 
@@ -416,7 +472,7 @@ export class Orderbook{
 
         try{
             while(low <= high){
-                const mid = low + ((high - low) << 1);
+                const mid = low + ((high - low) >> 1);
                 const price_mid_str = arr[mid]?.p;
                 assert(price_mid_str !== undefined, "Bid or Ask should exist");
     
@@ -435,8 +491,8 @@ export class Orderbook{
                         break;
                     }
     
-                    const niegh_price_str = arr[mid-1]?.p;
-                    assert(niegh_price_str !== undefined);
+                    const niegh_price_str = arr[high]!.p;
+
                     const niegh_price = Number.parseFloat(niegh_price_str);
     
                     if(niegh_price < price)
@@ -454,8 +510,8 @@ export class Orderbook{
                         break;
                     }
     
-                    const niegh_price_str = arr[mid+1]?.p;
-                    assert(niegh_price_str !== undefined);
+                    const niegh_price_str = arr[low]!.p;
+
                     const niegh_price = Number.parseFloat(niegh_price_str);
     
                     if(niegh_price > price)

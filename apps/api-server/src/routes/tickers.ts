@@ -9,7 +9,7 @@ const client = new Client({
     password: 'mysecretpassword',
     port: 5432,
 });
-
+client.connect();
 const router = new Router({
     prefix: "/api/v1/tickers"
 });
@@ -20,7 +20,7 @@ const query_params_schema = v.object({
 
 router.get("/",async (ctx) => {
     try{
-        await client.connect();
+        
         const parsed = v.safeParser(query_params_schema)(ctx.request.query);
         let interval = `1 week`;
         if(parsed.success){
@@ -60,7 +60,7 @@ router.get("/",async (ctx) => {
 
         ctx.status = 200;
         ctx.body = resp.rows;
-        await client.end();
+        
     }catch(err){
         console.log(err);
         ctx.status = 500;
@@ -72,3 +72,4 @@ router.get("/",async (ctx) => {
 })
 
 export default router.routes();
+

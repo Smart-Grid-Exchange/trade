@@ -10,19 +10,22 @@ const client = new Client({
     port: 5432,
 });
 
+client.connect();
+
 const router = new Router({
     prefix: "/api/v1/klines"
 });
 
 const query_params_schema = v.object({
     interval: v.union([v.literal("1w"),v.literal("1h"),v.literal("1m")]),
-    start_time: v.number(),
-    end_time: v.number(),
+    start_time: v.string(),
+    end_time: v.string(),
+    market: v.string(),
 });
 
 router.get("/",async (ctx) => {
     try{
-        await client.connect();
+        
         const parsed = v.safeParser(query_params_schema)(ctx.request.query);
         if(parsed.success === false){
             ctx.status = 400;
@@ -33,46 +36,23 @@ router.get("/",async (ctx) => {
             return;
         }
 
-        const {interval, start_time, end_time} = parsed.output;
-        let query = `SELECT 
-                        bucket, 
-                        currency_code,
-                        open AS first_price,
-                        close AS last_price,
-                        close - open AS price_change,
-                        ((close - open) / open) * 100 AS price_change_percent,
-                        high,
-                        low,
-                        volume,
-                        volume * ((open + close) / 2) AS quote_volume,
-                        COUNT(*) AS trades
-                    `;
-        const start_int = new Date(start_time).getTime() / 1000;
-        const end_int = new Date(end_time).getTime() / 1000;
-
+        const {interval, start_time, end_time, market} = parsed.output;
+        let table_name;
+        
+        const start_int = new Date(Number.parseInt(start_time)).toUTCString();
+        const end_int = new Date(Number.parseInt(end_time)).toUTCString();
+        const currency_code = market.split("_")[0]!;
         switch(interval){
             case "1m": {
-                query = `
-                        ${query}
-                        FROM klines_1m
-                        WHERE bucket >= $1 AND bucket <= $2
-                        ORDER BY bucket DESC;`
+                table_name = `klines_1m`;
                 break;
             }
             case "1h": {
-                query = `
-                        ${query}
-                        FROM klines_1h
-                        WHERE bucket >= $1 AND bucket <= $2
-                        ORDER BY bucket DESC;`
+                table_name = `klines_1h`;
                 break;
             }
             case "1w": {
-                query = `
-                        ${query}
-                        FROM klines_1w
-                        WHERE bucket >= $1 AND bucket <= $2
-                        ORDER BY bucket DESC;`
+                table_name = `klines_1w`;
                 break;
             }
             default: {
@@ -84,12 +64,21 @@ router.get("/",async (ctx) => {
                 return;
             }
         }
+        let query = `SELECT * FROM ${table_name} WHERE bucket >= $1 AND bucket <= $2 AND currency_code = $3`;
 
-        const resp = await client.query(query,[start_int.toString(),end_int.toString()]);
-
-        ctx.status = 200;
-        ctx.body = resp.rows;
-        await client.end();
+        try{
+            const resp = await client.query(query,[start_int,end_int,currency_code]);
+        
+            ctx.status = 200;
+            ctx.body = resp.rows;
+        }catch(err){
+            console.log(err);
+            ctx.status = 200;
+            ctx.body = {
+                code: "COULD NOT FETCH DB",
+                msg: err
+            }
+        }
     }catch(err){
         ctx.status = 500;
         ctx.body = {
@@ -98,3 +87,5 @@ router.get("/",async (ctx) => {
         }
     }
 })
+
+export default router.routes();

@@ -29,7 +29,7 @@ export class Engine{
             const orderbooks = parsed.output.orderbooks;
             const mapped = orderbooks.map((o) => {
                 const {base_asset, quote_asset} = this.destruct_ticket(o.market);
-                return [o.market, new Orderbook(o.market,base_asset,quote_asset,o.market_price,o.last_trade_id)] as const;
+                return [o.market, new Orderbook(o.market,base_asset,quote_asset,o.bids, o.asks,o.market_price,o.last_trade_id)] as const;
             });
             this.orderbooks = new Map(mapped)
         }
@@ -37,7 +37,7 @@ export class Engine{
 
             const mapped = MARKETS.map((market) => {
                 const { base_asset, quote_asset } = this.destruct_ticket(market);
-                return [market, new Orderbook(market,base_asset, quote_asset, "0.00", -1)] as const;
+                return [market, new Orderbook(market,base_asset, quote_asset,[],[], "0.00", -1)] as const;
             })
             
             this.orderbooks = new Map(mapped)
@@ -233,8 +233,8 @@ export class Engine{
                 market,
                 last_trade_id: snapshot.last_trade_id,
                 market_price: snapshot.market_price,
-                asks: snapshot.asks.map(ask => [...ask] as [string,string]),
-                bids: snapshot.bids.map(bid => [...bid] as [string,string]),
+                asks: snapshot.asks.map(ask => ask),
+                bids: snapshot.bids.map(bid => bid),
             })
         }
 
