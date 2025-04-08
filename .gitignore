@@ -40,5 +40,3 @@ yarn-error.log*
 # byproducts of using dev enviorment
 *.tsbuildinfo
 
-# prisma
-packages/prisma/generated/prisma

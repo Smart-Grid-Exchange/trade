@@ -1,17 +1,17 @@
-import {Client} from "pg";
+import { Client } from "pg";
 
 const client = new Client({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'postgres',
-    password: 'mysecretpassword',
-    port: 5432,
+  user: "postgres",
+  host: "localhost",
+  database: "postgres",
+  password: "mysecretpassword",
+  port: 5432,
 });
 
-async function initialize_db(){
-    await client.connect();
+async function initialize_db() {
+  await client.connect();
 
-    await client.query(`
+  await client.query(`
         DROP TABLE IF EXISTS "kwh_price" CASCADE;
         CREATE TABLE "kwh_price"(
             time    TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -25,11 +25,10 @@ async function initialize_db(){
         SELECT create_hypertable('kwh_price','time');
     `);
 
+  // Commit the transaction before creating a materialized view
+  await client.query("COMMIT");
 
-    // Commit the transaction before creating a materialized view
-    await client.query("COMMIT");
-
-    await client.query(`
+  await client.query(`
         CREATE MATERIALIZED VIEW klines_1m
         WITH (timescaledb.continuous=true) AS
         SELECT
@@ -44,7 +43,7 @@ async function initialize_db(){
         GROUP BY bucket, currency_code;
     `);
 
-    await client.query(`
+  await client.query(`
         CREATE MATERIALIZED VIEW klines_1h
         WITH (timescaledb.continuous=true) AS
         SELECT
@@ -59,7 +58,7 @@ async function initialize_db(){
         GROUP BY bucket, currency_code;
     `);
 
-    await client.query(`
+  await client.query(`
         CREATE MATERIALIZED VIEW klines_1w
         WITH (timescaledb.continuous=true) AS
         SELECT
@@ -74,29 +73,29 @@ async function initialize_db(){
         GROUP BY bucket, currency_code;
     `);
 
-    await client.query(`
+  await client.query(`
         SELECT add_continuous_aggregate_policy('klines_1m',
             start_offset => INTERVAL '3 minutes',
             end_offset => INTERVAL '1 minute',
             schedule_interval => INTERVAL '1 minute');
-    `)
+    `);
 
-    await client.query(`
+  await client.query(`
         SELECT add_continuous_aggregate_policy('klines_1h',
             start_offset => INTERVAL '3 hours',
             end_offset => INTERVAL '1 hour',
             schedule_interval => INTERVAL '1 hour');
-    `)
+    `);
 
-    await client.query(`
+  await client.query(`
         SELECT add_continuous_aggregate_policy('klines_1w',
             start_offset => INTERVAL '3 weeks',
             end_offset => INTERVAL '1 week',
             schedule_interval => INTERVAL '1 week');
-    `)
+    `);
 
-    await client.end();
-    console.log("DATABASE INITIALIZED SUCCESSFULLY")
+  await client.end();
+  console.log("DATABASE INITIALIZED SUCCESSFULLY");
 }
 
 initialize_db().catch(console.error);

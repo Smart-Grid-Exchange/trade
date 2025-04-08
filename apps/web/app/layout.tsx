@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import RecoilContextProvider from "@/components/provider/recoil_context_provider";
 import Navbar from "@/components/navbar";
-import { DM_Sans} from "next/font/google";
+import { DM_Sans } from "next/font/google";
 
 // const geistSans = localFont({
 //   src: "./fonts/GeistVF.woff",
@@ -16,9 +16,9 @@ import { DM_Sans} from "next/font/google";
 // });
 
 const dmSans = DM_Sans({
-  subsets: ['latin'], // Load only the Latin characters
-  weight: ['400', '500', '700'], // Load specific font weights
-  variable: '--font-dm-sans', // Assign a CSS variable
+  subsets: ["latin"], // Load only the Latin characters
+  weight: ["400", "500", "700"], // Load specific font weights
+  variable: "--font-dm-sans", // Assign a CSS variable
 });
 
 export const metadata: Metadata = {
@@ -35,9 +35,9 @@ export default function RootLayout({
     <html lang="en">
       <RecoilContextProvider>
         <body className={`${dmSans.variable}`}>
-          <Navbar/>
+          <Navbar />
           {children}
-          <Toaster/>
+          <Toaster />
         </body>
       </RecoilContextProvider>
     </html>

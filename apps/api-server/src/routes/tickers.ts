@@ -1,45 +1,44 @@
 import Router from "koa-router";
-import {Client} from "pg";
+import { Client } from "pg";
 import * as v from "valibot";
 
 const client = new Client({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'postgres',
-    password: 'mysecretpassword',
-    port: 5432,
+  user: "postgres",
+  host: "localhost",
+  database: "postgres",
+  password: "mysecretpassword",
+  port: 5432,
 });
 client.connect();
 const router = new Router({
-    prefix: "/api/v1/tickers"
+  prefix: "/api/v1/tickers",
 });
 
 const query_params_schema = v.object({
-    interval: v.union([v.literal("1w"),v.literal("1h"),v.literal("1m")]),
-})
+  interval: v.union([v.literal("1w"), v.literal("1h"), v.literal("1m")]),
+});
 
-router.get("/",async (ctx) => {
-    try{
-        
-        const parsed = v.safeParser(query_params_schema)(ctx.request.query);
-        let interval = `1 week`;
-        if(parsed.success){
-            switch(parsed.output.interval){
-                case "1w": {
-                    interval = '1 week'
-                    break;
-                }
-                case "1h": {
-                    interval = '1 hour'
-                    break;
-                }
-                case "1m": {
-                    interval = '1 minute'
-                    break;
-                }
-            }
+router.get("/", async (ctx) => {
+  try {
+    const parsed = v.safeParser(query_params_schema)(ctx.request.query);
+    let interval = `1 week`;
+    if (parsed.success) {
+      switch (parsed.output.interval) {
+        case "1w": {
+          interval = "1 week";
+          break;
         }
-        const resp = await client.query(`
+        case "1h": {
+          interval = "1 hour";
+          break;
+        }
+        case "1m": {
+          interval = "1 minute";
+          break;
+        }
+      }
+    }
+    const resp = await client.query(`
             SELECT 
                 currency_code as market,
                 first(price, time) AS first_price,
@@ -58,18 +57,16 @@ router.get("/",async (ctx) => {
             LIMIT 1;
         `);
 
-        ctx.status = 200;
-        ctx.body = resp.rows;
-        
-    }catch(err){
-        console.log(err);
-        ctx.status = 500;
-        ctx.body = {
-            code: "INTERNAL_SERVER_CODE",
-            body: "FAILED FETCHING MARKETS, TRY AGAIN",
-        }
-    }
-})
+    ctx.status = 200;
+    ctx.body = resp.rows;
+  } catch (err) {
+    console.log(err);
+    ctx.status = 500;
+    ctx.body = {
+      code: "INTERNAL_SERVER_CODE",
+      body: "FAILED FETCHING MARKETS, TRY AGAIN",
+    };
+  }
+});
 
 export default router.routes();
-

@@ -16,13 +16,13 @@ const app = new Koa();
 app.use(bodyParser());
 
 app.use(
-    cors({
-      origin: "http://localhost:3000", // Allow Next.js frontend (update for production)
-      credentials: true, // Allow cookies (if using authentication)
-      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
-      allowHeaders: ["Content-Type", "Authorization"], // Allowed headers
-    })
-  );
+  cors({
+    origin: "http://localhost:3000", // Allow Next.js frontend (update for production)
+    credentials: true, // Allow cookies (if using authentication)
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
+    allowHeaders: ["Content-Type", "Authorization"], // Allowed headers
+  }),
+);
 
 const router = new Router();
 
@@ -32,6 +32,6 @@ app.use(orderRouter);
 app.use(klinesRouter);
 app.use(depthRouter);
 
-app.listen(PORT,HOST, () => {
-    console.log("Server start on port 3001");
-})
+app.listen(PORT, HOST, () => {
+  console.log("Server start on port 3001");
+});
