@@ -268,7 +268,7 @@ export class Engine{
 
     // --------------------- STREAMS -------------------
 
-    private stream_depth(symbol: string, price: string, side: Side){
+    public stream_depth(symbol: string, price: string, side: Side){
         const timestamp_mus = epoch_in_micros();
 
         const orderbook = this.get_orderbook(symbol);

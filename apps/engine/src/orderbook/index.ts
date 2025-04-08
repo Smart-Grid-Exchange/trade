@@ -1,5 +1,6 @@
 import assert from "minimalistic-assert";
 import type { Order, OrderFill, OrderRequest, OrderStatus, Side } from "../schema";
+import { Engine } from "../engine";
 
 export class Orderbook{
     public market: string;
@@ -46,6 +47,9 @@ export class Orderbook{
     }
 
     public process_order(side: Side, order: OrderRequest){
+        // OVERDEFENSIVE -- GONNA REMOVE AFTER WRITTING TESTS.
+        this.bids.sort((a,b) => Number.parseFloat(b.p) - Number.parseFloat(a.p));
+        this.asks.sort((a,b) => Number.parseFloat(a.p) - Number.parseFloat(b.p));
 
         let order_status:OrderStatus = "NOT_FILLED";
 
@@ -157,7 +161,7 @@ export class Orderbook{
                         order_quan = 0;
                         order_status = "FILLED";
                     }
-
+                    Engine.get_instance().stream_depth(this.market,this.market_price,"BID");
                     // ternary operator ??
                 }
 
@@ -287,6 +291,7 @@ export class Orderbook{
                         order_status = "FILLED";
                         order_quan = 0;
                     }
+                    Engine.get_instance().stream_depth(this.market,this.market_price,"ASK");
 
                 }
             }

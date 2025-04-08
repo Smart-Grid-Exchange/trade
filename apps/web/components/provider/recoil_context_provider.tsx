@@ -4,6 +4,6 @@ import { RecoilRoot } from "recoil";
 
 export default function RecoilContextProvider({
   children,
-}: Readonly<{ children: React.JSX.Element }>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return <RecoilRoot>{children}</RecoilRoot>;
 }
