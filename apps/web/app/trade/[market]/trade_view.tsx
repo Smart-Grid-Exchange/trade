@@ -32,9 +32,7 @@ export default function TradeView({ market }: { market: string }) {
         );
 
         const raw_data = await resp.json();
-        console.log(raw_data);
         if (resp.status === 200) {
-          console.log("I am here");
           const data = v.parse(klines_api_resp_schema, raw_data);
           if (chart_ref && chart_ref.current) {
             if (chart_manager_ref.current) {
@@ -60,7 +58,7 @@ export default function TradeView({ market }: { market: string }) {
   return (
     <div
       ref={chart_ref}
-      style={{ height: "540px", width: "100%", marginTop: 4, borderRadius: 10 }}
+      style={{ height: "560px", width: "100%", marginTop: 4, borderRadius: 10 }}
     ></div>
   );
 }

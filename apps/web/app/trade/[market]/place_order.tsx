@@ -28,10 +28,7 @@ export default function PlaceOrder({
   market_price: string;
 }) {
   return (
-    <Tabs
-      defaultValue="bid"
-      className="w-[370px] bg-slate-100 rounded-md h-full"
-    >
+    <Tabs defaultValue="bid" className="bg-slate-100 rounded-md h-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="bid">Buy</TabsTrigger>
         <TabsTrigger value="ask">Sell</TabsTrigger>
@@ -64,7 +61,7 @@ function OrderTypeTabBox({
   symbol: string;
 }) {
   return (
-    <Tabs defaultValue="limit" className="w-[370px] my-1">
+    <Tabs defaultValue="limit" className="my-1">
       <TabsList className="grid grid-cols-2">
         <TabsTrigger value="limit">Limit</TabsTrigger>
         <TabsTrigger value="market">Market</TabsTrigger>

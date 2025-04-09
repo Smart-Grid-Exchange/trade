@@ -70,16 +70,19 @@ export class ChartManager {
       wickDownColor: "#94a3b8",
     });
 
-    this.candle_series.setData(
-      initial_data
-        .map((data) => ({
-          ...data,
-          time: new Date(data.bucket).getTime() as UTCTimestamp,
-        }))
-        .sort(
-          (a, b) => new Date(a.bucket).getTime() - new Date(b.bucket).getTime(),
-        ),
-    );
+    let candle_series_data = initial_data.map((d) => {
+      return {
+        high: d.high,
+        low: d.low,
+        open: d.open,
+        close: d.close,
+        time: (new Date(d.bucket).getTime() / 1000) as UTCTimestamp,
+      };
+    });
+
+    candle_series_data = candle_series_data.sort((a, b) => a.time - b.time);
+
+    this.candle_series.setData(candle_series_data);
   }
 
   public update(

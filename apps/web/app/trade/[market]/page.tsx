@@ -126,8 +126,8 @@ export default function Trade({ params }: { params: { market: string } }) {
   }, [depthState]);
 
   return (
-    <div className="flex flex-row gap-1">
-      <div className="flex flex-col w-full">
+    <div className="flex flex-row gap-1 w-full">
+      <div className="flex flex-col w-5/6">
         <Header symbol={market} price={marketPrice} />
         {depthState.state === "hasValue" ? (
           <div className="flex flex-row gap-1">

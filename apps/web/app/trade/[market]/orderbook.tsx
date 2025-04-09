@@ -2,6 +2,7 @@ import Book from "@/components/book";
 import { TradeTable } from "@/components/trades";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BearBull from "./bear_bull";
 
 export function Orderbook({
   trades,
@@ -49,8 +50,8 @@ export function Orderbook({
         <TabsTrigger value="book">Book</TabsTrigger>
         <TabsTrigger value="trades">Trades</TabsTrigger>
       </TabsList>
-      <ScrollArea className="h-[480px] w-[340px] px-1">
-        <TabsContent value="book">
+      <TabsContent className="w-full" value="book">
+        <ScrollArea className="h-[460px] w-full px-1">
           <Book
             bids={bids_with_total}
             asks={asks_with_total}
@@ -58,11 +59,14 @@ export function Orderbook({
             total_bid_max={total_bid_max}
             total_ask_max={total_ask_max}
           />
-        </TabsContent>
-        <TabsContent value="trades">
+        </ScrollArea>
+        <BearBull total_ask={total_ask_max} total_bid={total_bid_max}/>
+      </TabsContent>
+      <TabsContent className="flex w-full flex-col" value="trades">
+        <ScrollArea className="h-[470px] px-1">
           <TradeTable trades={trades} />
-        </TabsContent>
-      </ScrollArea>
+        </ScrollArea>
+      </TabsContent>
     </Tabs>
   );
 }
