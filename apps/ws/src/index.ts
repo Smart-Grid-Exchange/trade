@@ -13,11 +13,11 @@ const WebSocketServer = WSSocketServer || WebSocket.Server;
 const wss = new WebSocketServer({ port: 8080 });
 
 const db_client = new Client({
-  user: process.env.DB_USER_DEV,
-  host: process.env.DB_HOST_DEV,
-  database: process.env.DB_DATABASE_DEV,
-  password: process.env.DB_PASSWORD_DEV,
-  port: Number.parseInt(process.env.DB_PORT_DEV ?? "5432"),
+  user: process.env.DB_USER_PROD,
+  host: process.env.DB_HOST_PROD,
+  database: process.env.DB_DATABASE_PROD,
+  password: process.env.DB_PASSWORD_PROD,
+  port: Number.parseInt(process.env.DB_PORT_PROD ?? "5432"),
 });
 
 db_client.connect();

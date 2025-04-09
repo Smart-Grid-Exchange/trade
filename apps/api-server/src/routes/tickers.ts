@@ -7,11 +7,11 @@ import dotenv from "dotenv";
 dotenv.config({path: path.resolve(__dirname,"../../../.env")});
 
 const client = new Client({
-  user: process.env.DB_USER_DEV,
-  host: process.env.DB_HOST_DEV,
-  database: process.env.DB_DATABASE_DEV,
-  password: process.env.DB_PASSWORD_DEV,
-  port: Number.parseInt(process.env.DB_PORT_DEV ?? "5432"),
+  user: process.env.DB_USER_PROD,
+  host: process.env.DB_HOST_PROD,
+  database: process.env.DB_DATABASE_PROD,
+  password: process.env.DB_PASSWORD_PROD,
+  port: Number.parseInt(process.env.DB_PORT_PROD ?? "5432"),
 });
 
 client.connect();
