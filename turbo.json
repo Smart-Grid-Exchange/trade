@@ -1,6 +1,31 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "DB_USER_DEV",
+    "DB_HOST_DEV",
+    "DB_DATABASE_DEV",
+    "DB_PASSWORD_DEV",
+    "DB_PORT_DEV",
+    "DB_USER_PROD",
+    "DB_HOST_PROD",
+    "DB_PORT_PROD",
+    "DB_DATABASE_PROD",
+    "DB_PASSWORD_PROD"
+  ],
+  "globalPassThroughEnv": [
+    "DB_USER_DEV",
+    "DB_HOST_DEV",
+    "DB_DATABASE_DEV",
+    "DB_PASSWORD_DEV",
+    "DB_PORT_DEV",
+    "DB_USER_PROD",
+    "DB_HOST_PROD",
+    "DB_PORT_PROD",
+    "DB_DATABASE_PROD",
+    "DB_PASSWORD_PROD"
+  ],
+  "globalDependencies": [".env"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -14,6 +39,10 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start":{
       "cache": false,
       "persistent": true
     }

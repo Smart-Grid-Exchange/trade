@@ -3,17 +3,21 @@ import WebSocket from "ws";
 import { Client } from "pg";
 import { RedisSubscriptionManager } from "./redis_manager";
 import { Ticker } from "./types";
+import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config({path: path.resolve(__dirname,"../../../.env")});
 
 const WebSocketServer = WSSocketServer || WebSocket.Server;
 
 const wss = new WebSocketServer({ port: 8080 });
 
 const db_client = new Client({
-  user: "postgres",
-  host: "localhost",
-  database: "postgres",
-  password: "mysecretpassword",
-  port: 5432,
+  user: process.env.DB_USER_DEV,
+  host: process.env.DB_HOST_DEV,
+  database: process.env.DB_DATABASE_DEV,
+  password: process.env.DB_PASSWORD_DEV,
+  port: Number.parseInt(process.env.DB_PORT_DEV ?? "5432"),
 });
 
 db_client.connect();

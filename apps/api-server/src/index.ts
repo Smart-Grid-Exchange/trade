@@ -2,6 +2,9 @@ import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import Router from "koa-router";
 import cors from "@koa/cors";
+import dotenv from "dotenv";
+import path from "path";
+
 
 import tradesRouter from "./routes/trades";
 import tickerRouter from "./routes/tickers";
@@ -23,6 +26,8 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization"], // Allowed headers
   }),
 );
+
+dotenv.config({path: path.resolve(__dirname,"../../../.env")});
 
 const router = new Router();
 

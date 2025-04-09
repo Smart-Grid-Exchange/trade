@@ -1,16 +1,20 @@
 import * as v from "valibot";
 import { Client } from "pg";
 import { createClient } from "redis";
+import dotenv from "dotenv";
+import path from "path";
 
 import { event_queue_popped_data_schema } from "./schema";
 import type { EventQueuePoppedData } from "./schema";
 
+dotenv.config({path: path.resolve(__dirname,"../../../.env")});
+
 const ts_client = new Client({
-  user: "postgres",
-  host: "localhost",
-  database: "postgres",
-  password: "mysecretpassword",
-  port: 5432,
+  user: process.env.DB_USER_DEV,
+  host: process.env.DB_HOST_DEV,
+  database: process.env.DB_DATABASE_DEV,
+  password: process.env.DB_PASSWORD_DEV,
+  port: Number.parseInt(process.env.DB_PORT_DEV ?? "5432"),
 });
 
 const rds_client = createClient();

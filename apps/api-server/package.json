@@ -4,7 +4,8 @@
   "description": "Primary server to handle all trade related requests.",
   "scripts": {
     "build": "esbuild src/index.ts --platform=node --bundle --outdir=dist",
-    "dev": "pnpm run build && node dist/index.js"
+    "dev": "NODE_ENV=development pnpm run build && node dist/index.js",
+    "start": "NODE_ENV=production pnpm run build && node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,7 @@
   "dependencies": {
     "@koa/cors": "^5.0.0",
     "@types/pg": "^8.11.11",
+    "dotenv": "^16.4.7",
     "esbuild": "^0.23.1",
     "koa": "^2.15.4",
     "koa-bodyparser": "^4.4.1",

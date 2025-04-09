@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "esbuild src/* --platform=node --bundle --outdir=dist",
-    "dev": "pnpm run build && node dist/index.js"
+    "dev": "NODE_ENV=development pnpm run build && node dist/index.js",
+    "start": "NODE_ENV=production pnpm run build && node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "@repo/typescript-config": "workspace:*",
+    "dotenv": "^16.4.7",
     "pg": "^8.14.1",
     "redis": "^4.7.0",
     "valibot": "1.0.0-rc.3"
