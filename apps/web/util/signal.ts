@@ -1,7 +1,7 @@
 import assert from "minimalistic-assert";
 
 const PORT = 8080;
-const BASE_URL = "ws://localhost";
+const BASE_URL = "wss://exchangews.varuncodes.com";
 export class SignalManager {
   private static instance: SignalManager;
   private ws: WebSocket;

@@ -142,7 +142,7 @@ function MarketOrderBox({
     };
 
     try {
-      const resp = await fetch(`${process.env.API_ORIGIN_PROD}/api/v1/order`, {
+      const resp = await fetch(`https://exchangeapi.varuncodes.com/api/v1/order`, {
         credentials: "include",
         method: "POST",
         headers: {
@@ -297,7 +297,7 @@ function LimitOrderBox({
     };
 
     try {
-      const resp = await fetch(`${process.env.API_ORIGIN_PROD}/api/v1/order`, {
+      const resp = await fetch(`https://exchangeapi.varuncodes.com/api/v1/order`, {
         credentials: "include",
         method: "POST",
         headers: {
