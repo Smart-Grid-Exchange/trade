@@ -23,7 +23,7 @@ export const fetch_depth = selectorFamily<
           symbol,
         });
         const resp = await fetch(
-          "http://localhost:3001/api/v1/depth?" + query_param,
+          `${process.env.API_ORIGIN_PROD}/api/v1/depth?` + query_param,
           {
             credentials: "include",
             headers: {

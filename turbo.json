@@ -11,7 +11,13 @@
     "DB_HOST_PROD",
     "DB_PORT_PROD",
     "DB_DATABASE_PROD",
-    "DB_PASSWORD_PROD"
+    "DB_PASSWORD_PROD",
+    "WEB_ORIGIN_DEV",
+    "WEB_ORIGIN_PROD",
+    "API_ORIGIN_DEV",
+    "API_ORIGIN_PROD",
+    "WS_ORIGIN_DEV",
+    "WS_ORIGIN_PROD"
   ],
   "globalPassThroughEnv": [
     "DB_USER_DEV",
@@ -23,7 +29,13 @@
     "DB_HOST_PROD",
     "DB_PORT_PROD",
     "DB_DATABASE_PROD",
-    "DB_PASSWORD_PROD"
+    "DB_PASSWORD_PROD",
+    "WEB_ORIGIN_DEV",
+    "WEB_ORIGIN_PROD",
+    "API_ORIGIN_DEV",
+    "API_ORIGIN_PROD",
+    "WS_ORIGIN_DEV",
+    "WS_ORIGIN_PROD"
   ],
   "globalDependencies": [".env"],
   "tasks": {

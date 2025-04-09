@@ -7,7 +7,7 @@ export const fetch_tickers = selector<DashboardTickers>({
   key: "fetch_tickers",
   get: async () => {
     try {
-      const resp = await fetch("http://localhost:3001/api/v1/tickers", {
+      const resp = await fetch(`${process.env.API_ORIGIN_PROD}/api/v1/tickers`, {
         credentials: "include",
       });
       const raw_data = await resp.json();

@@ -22,7 +22,7 @@ export default function TradeView({ market }: { market: string }) {
         });
 
         const resp = await fetch(
-          `http://localhost:3001/api/v1/klines?` + query_params,
+          `${process.env.API_ORIGIN_PROD}/api/v1/klines?` + query_params,
           {
             credentials: "include",
             headers: {
